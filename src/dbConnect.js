@@ -1,14 +1,14 @@
 import { cert, initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore"
-
+import { service_account } from "../secrets.js"
 
 
 export default function dbConnect(){
     // check if not connected
-    if (getApps().length === 0){
+    if (!getApps().length){
         //connect
         initializeApp({
-            credential: cert(serviceAccount)
+            credential: cert(service_account)
         })
     }
     

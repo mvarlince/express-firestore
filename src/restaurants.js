@@ -1,33 +1,52 @@
-// RESTAURANTS
-// app.get('/restaurants', getAllRestaurants)
-// app.get('/restaurants'/:restID', getRestaurantByID)
-// app.post('/restuarants', createRestaurant)
+import { FieldValue } from "firebase-admin/firestore"
+import dbConnect from "./dbConnect.js"
+const collectionName = 'restaurants'
 
-import dbConnect from "./dbConnect"
-
-export function getAllRestaurants(req,res){
+//Get aLL
+export async function getAllRestaurants(req,res){
     const db = dbConnect()
-    res.send('All Restaurants')
+    // *****  check
+    const collection = await db.collection(collectionName).orderBy('createdAt', 'desc').get()
+    const restaurants = collection.docs.map(doc => ({...doc.data(), restID: doc.id}))
+    res.send(restaurants)
 }
 
-export function getRestaurantByID(req,res){
+// Rest ID
+export async function getRestaurantByID(req,res){
+    const db = dbConnect()
     const {restID} = req.params
     // const restID = req.params.restID
-    res.send(`Got restaurant: ${restID}`)
+    const doc = db.collection(collectionName).doc(restID).get()
+    const rest = doc.data()
+    res.send(`Got restaurant: ${rest}`)
 }
 
-export function createRestaurant(req, res){
-    const newRestaurant = req.body
+// Create
+export async function createRestaurant(req, res){
+    const db = dbConnect()
+    let newRestaurant = req.body
+    // add a timestamp to the new restaurant
+    newRestaurant.createdAt = FieldValue.serverTimestamp() 
+    await db.collection(collectionName).add(newRestaurant)
     res.status(201).send(`Created ${newRestaurant}`)
 }
 
+// Update
+export async function updateRestaurant(req, res){
+    const {restID } = req.params
+    const updateInfo = req.body
 
-// const person = {
-//     age: 26,
-//     name: 'sir',
-//     birthday: 'dec 10'
-// }
+    const db = dbConnect()
+    // ADD UPDATED AT FIELD FOR WHEN UPDATING RESTAURANT
+    await db.collection(collectionName).doc(restID).update(updateInfo)
+    res.status(202).send('Restaurant updated')
+}
 
-// const {age,birthday} = person
-
-// console.log(age,birthday)
+//delete
+export async function deleteRestaurant (req, res) {
+    const {restID} = req.params
+    
+    const db = dbConnect()
+    await db.collection(collectionName).doc(restID).delete()
+    res.send("Restaurant Dleted")
+}
